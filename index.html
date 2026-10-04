@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air, Water &amp; Sound Pollution — Know Your Surroundings | SIGNAL</title>
+<meta name="description" content="Know your surroundings. Understand pollution. Take action. Search your area's air, water and noise readings, report what you see, and log real fixes.">
+<meta name="theme-color" content="#1C2321">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,600;1,500;1,600;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="navrow">
+    <div class="brand"><span class="dot"></span>SIGNAL</div>
+    <div class="navlinks">
+      <a href="#areasearch">Your Area</a>
+      <a href="#deepdive">Air / Water / Sound</a>
+      <a href="#report">Report</a>
+      <a href="#idea">Ideas</a>
+      <a href="#dashboard">Your Score</a>
+    </div>
+    <div class="navscore" id="navscore">
+      <span>INDEX</span> <b id="navPts">0</b>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================= HERO ============================= -->
+<section class="hero">
+  <canvas id="heroParticles" style="position:absolute; inset:0; width:100%; height:100%; z-index:0;"></canvas>
+  <div class="hero-inner">
+    <div>
+      <p class="eyebrow">SIGNAL · Field index · Air / Water / Sound</p>
+      <h1>Air, Water <span class="under">&amp; Sound</span><br>Pollution.</h1>
+      <p class="lede">Know your surroundings. Understand pollution. Take action. This started as a class project — it's turned into a place to actually check the air you're breathing, log what you're doing about it, and see it add up.</p>
+      <div class="hero-ctas">
+        <a href="#areasearch" class="btn">🔍 Check your area ↓</a>
+        <a href="#search" class="btn ghost">Search an action</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><b>6.7M</b><span>early deaths / yr tied<br>to air pollution — WHO</span></div>
+        <div class="hero-stat"><b>80%</b><span>of global wastewater<br>returned untreated</span></div>
+        <div class="hero-stat"><b>85 dB</b><span>sustained exposure<br>starts damaging hearing</span></div>
+      </div>
+    </div>
+
+    <div class="gauge-card">
+      <div class="gauge-top">
+        <p class="eyebrow">Session gauge</p>
+        <span class="live"><i></i>LIVE</span>
+      </div>
+      <div class="gaugeWrap">
+        <svg id="gaugeSvg" viewBox="0 0 220 130" width="240">
+          <path d="M 20 120 A 90 90 0 0 1 200 120" fill="none" stroke="#00000012" stroke-width="18" stroke-linecap="round"/>
+          <path id="gaugeArc" d="M 20 120 A 90 90 0 0 1 200 120" fill="none" stroke="#C64545" stroke-width="18" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="255"/>
+          <g id="gaugeNeedle" style="transform-origin:110px 120px; transform:rotate(-90deg); transition:transform .8s cubic-bezier(.3,.8,.3,1);">
+            <line x1="110" y1="120" x2="110" y2="42" stroke="#1C2321" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="110" cy="120" r="7" fill="#1C2321"/>
+          </g>
+        </svg>
+        <div class="gaugeNum" id="gaugeNum">Unread</div>
+        <div class="gaugeLabel">This session's clean-action score</div>
+      </div>
+      <p class="gaugeCaption">Every action you log below nudges this needle toward <b>Clear</b>. It resets when the page does — your real score lives in the dashboard underneath.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= SEARCH YOUR AREA ============================= -->
+<section class="areasearch-section" id="areasearch">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">🔍 Check pollution in your area</p>
+      <h2>Type a city, town or locality.</h2>
+      <p>We'll pull up an air, water and noise snapshot for it — plus a plain-language read on what those numbers actually mean for your day.</p>
+    </div>
+
+    <div class="areasearch-box reveal">
+      <input type="text" id="areaInput" placeholder="Try “Nashik”, “Mumbai”, or your own town…" autocomplete="off">
+      <button id="areaBtn">Search</button>
+    </div>
+    <div id="areaSuggestions"></div>
+    <div class="areachips reveal" id="areaChipRow"></div>
+
+    <div class="area-result" id="areaResult"></div>
+  </div>
+</section>
+
+<!-- ============================= AQI AROUND CITIES ============================= -->
+<section id="citiesaqi">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">🌍 Air quality around cities</p>
+      <h2>How today's reading compares elsewhere.</h2>
+      <p>A quick scan across major cities so your number has some context.</p>
+    </div>
+    <div class="citygrid" id="cityGrid"></div>
+    <div class="viewmore-row"><button class="viewmore-btn" id="viewMoreCities">View more cities ↓</button></div>
+    <div class="disclaimer reveal" style="max-width:640px; margin:26px auto 0;">
+      <span>ⓘ</span><span><b>Demo data.</b> These figures illustrate how the feature works — they are not a live feed. Wire in a real AQI/water/noise API to replace them with current readings.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= THREE FRONTS ============================= -->
+<section class="fronts" id="fronts">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Three fronts, one atmosphere</p>
+      <h2>Pollution doesn't travel alone.</h2>
+      <p>Air, water, and sound are usually studied apart — but a single burning pile of trash fouls the air, a single leaking drum fouls the water table, a single idling truck fouls both the air and the block. Start with whichever front is loudest where you live.</p>
+    </div>
+    <div class="frontgrid">
+      <div class="frontcard reveal air" data-tab="air">
+        <svg class="ficon" viewBox="0 0 48 48" fill="none" stroke="#E4A93B" stroke-width="2.4" stroke-linecap="round">
+          <path d="M6 32c3-6 9-9 14-6 2-8 12-10 16-2 5 0 8 4 6 8"/>
+          <path d="M10 40h6M20 40h10M34 40h4"/>
+        </svg>
+        <h3>Air</h3>
+        <p>Vehicle exhaust, open burning, and diesel gensets stack fine particles into every breath a city takes.</p>
+        <div class="fstat"><span>Linked deaths / yr<b>6.7M</b></span><span>→</span></div>
+      </div>
+      <div class="frontcard reveal water" data-tab="water">
+        <svg class="ficon" viewBox="0 0 48 48" fill="none" stroke="#2A7F8E" stroke-width="2.4" stroke-linecap="round">
+          <path d="M24 6c8 11 13 18 13 25a13 13 0 1 1-26 0c0-7 5-14 13-25z"/>
+        </svg>
+        <h3>Water</h3>
+        <p>Runoff, untreated effluent, and single-use plastic turn rivers and coastlines into unmonitored drains.</p>
+        <div class="fstat"><span>Wastewater untreated<b>80%</b></span><span>→</span></div>
+      </div>
+      <div class="frontcard reveal sound" data-tab="sound">
+        <svg class="ficon" viewBox="0 0 48 48" fill="none" stroke="#D9583B" stroke-width="2.4" stroke-linecap="round">
+          <path d="M4 20v8h6l9 8V12l-9 8H4z"/>
+          <path d="M27 16a12 12 0 0 1 0 16M33 10a20 20 0 0 1 0 28"/>
+        </svg>
+        <h3>Sound</h3>
+        <p>Traffic, construction, and loudspeakers push whole neighborhoods past what the ear can safely absorb.</p>
+        <div class="fstat"><span>Harm threshold<b>85 dB</b></span><span>→</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= DEEP DIVE ============================= -->
+<section class="deep" id="deepdive">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Field notes</p>
+      <h2>What's actually going on, front by front</h2>
+      <p>Pulled from current public-health and environmental reporting — not just the textbook version.</p>
+    </div>
+
+    <div class="tabbar">
+      <button class="tabbtn active" data-t="air"><span class="sw"></span>Air</button>
+      <button class="tabbtn" data-t="water"><span class="sw"></span>Water</button>
+      <button class="tabbtn" data-t="sound"><span class="sw"></span>Sound</button>
+    </div>
+
+    <!-- AIR PANEL -->
+    <div class="tabpanel active" id="panel-air">
+      <div class="deepgrid">
+        <div class="deepintro reveal">
+          <h3>Air Pollution</h3>
+          <p>Combined outdoor and household air pollution is linked to an estimated 6.7 million early deaths every year worldwide, and the risk list keeps growing — 2026 research has strengthened the tie between long-term exposure and dementia, and air pollution was formally added to the European Code Against Cancer this year as a recognised, addressable cancer risk.</p>
+          <p>Fine particulate matter (PM2.5) is small enough to cross from the lungs into the bloodstream, where it drives inflammation and oxidative stress linked to heart and aortic disease, not just asthma and coughing.</p>
+          <div class="readouts">
+            <div class="readout"><b>PM2.5</b><span>crosses into bloodstream</span></div>
+            <div class="readout"><b>2026</b><span>added to EU cancer code</span></div>
+          </div>
+          <p class="source">Sources: WHO / Coltura 2026 guide · Clean Air Fund, 2026 roundup · NCBI aortic-disease review</p>
+        </div>
+        <div class="colcols">
+          <div class="deepcol">
+            <h4>Where it comes from</h4>
+            <div class="deepitem"><b>Transport</b>Vehicle exhaust, especially older diesel engines, is a leading urban source of NOx and soot.</div>
+            <div class="deepitem"><b>Open burning</b>Trash, crop stubble, and yard waste burned in the open release dense particulate smoke with no filtration at all.</div>
+            <div class="deepitem"><b>Household fuel</b>Cooking over wood or coal indoors is one of the most concentrated personal exposures that exists.</div>
+            <div class="deepitem"><b>Industry & power</b>Diesel generators and unregulated factory stacks add steady background particulate load.</div>
+          </div>
+          <div class="deepcol prevent">
+            <h4>How it's brought down</h4>
+            <div class="deepitem"><b>Cleaner combustion</b>Diesel-engine upgrades alone are projected to prevent thousands of heart attacks a year in EPA modelling.</div>
+            <div class="deepitem"><b>Coal-to-clean heating</b>Kraków's household coal ban paired with clean-heating rollout has measurably cut black carbon and premature deaths.</div>
+            <div class="deepitem"><b>Indoor ventilation</b>Range hoods, HEPA filtration, and switching off high-VOC products cut the exposure people control directly.</div>
+            <div class="deepitem"><b>Policy + carbon pricing</b>Because air pollution and climate change share the same fossil sources, broad decarbonisation policy attacks both at once.</div>
+          </div>
+        </div>
+        <div class="callout">
+          <h5>When the AQI is high, today</h5>
+          <ul>
+            <li>Skip long outdoor workouts, especially near busy roads</li>
+            <li>Reach for a proper mask if you need to be out for a while</li>
+            <li>Keep windows shut during the worst hours and let indoor air settle</li>
+            <li>Check on anyone with asthma or breathing issues in your house</li>
+            <li>Follow whatever your local health advisory says for that day</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h5>What you can actually do about it</h5>
+          <ul>
+            <li>Take the bus, metro, or carpool when you can</li>
+            <li>Walk or cycle for the short stuff instead of starting the car</li>
+            <li>Never burn garbage — bag it or compost it instead</li>
+            <li>Keep your own vehicle serviced; a clean engine burns cleaner</li>
+            <li>Plant something. Protect what's already growing near you</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- WATER PANEL -->
+    <div class="tabpanel" id="panel-water">
+      <div class="deepgrid">
+        <div class="deepintro reveal">
+          <h3>Water Pollution</h3>
+          <p>About 80% of the wastewater produced globally is discharged back into rivers, lakes, and oceans without adequate treatment — meaning most contamination isn't a rare spill, it's routine flow. Point-source pollution (a single pipe, a single factory) is comparatively easy to trace and regulate; the harder problem is non-point runoff — fertiliser, oil, and litter washed in from thousands of ordinary yards, roads, and fields at once.</p>
+          <p>Excess nutrients from fertiliser and detergent runoff feed algal blooms that strip oxygen from the water as they decay, creating "dead zones" where fish simply cannot survive.</p>
+          <div class="readouts">
+            <div class="readout"><b>80%</b><span>wastewater untreated</span></div>
+            <div class="readout"><b>2 types</b><span>point & non-point source</span></div>
+          </div>
+          <p class="source">Sources: Microbenotes water-pollution review · Britannica, water pollution · Iberdrola sustainability desk</p>
+        </div>
+        <div class="colcols">
+          <div class="deepcol">
+            <h4>Where it comes from</h4>
+            <div class="deepitem"><b>Industrial effluent</b>Untreated factory and refinery discharge is the classic point-source contaminator of rivers and coastlines.</div>
+            <div class="deepitem"><b>Agricultural runoff</b>Fertiliser and pesticide residue washes off farmland with every rain, carrying nitrogen and phosphorus into waterways.</div>
+            <div class="deepitem"><b>Household waste</b>Cooking oil, chemical cleaners, and flushed medication travel straight through drains most treatment plants weren't built to fully filter.</div>
+            <div class="deepitem"><b>Plastic & litter</b>Single-use plastic breaks down into microplastics that concentrate up the food chain into the seafood people eat.</div>
+          </div>
+          <div class="deepcol prevent">
+            <h4>How it's brought down</h4>
+            <div class="deepitem"><b>Treat before discharge</b>Mandatory effluent treatment plants keep industrial waste from reaching open water in the first place.</div>
+            <div class="deepitem"><b>Buffer & rotate</b>Cover cropping, crop rotation, and vegetated buffer strips cut fertiliser and pesticide runoff at the source.</div>
+            <div class="deepitem"><b>Household discipline</b>Never pouring oil, paint, or medicine down a drain removes a surprisingly large share of household-level contamination.</div>
+            <div class="deepitem"><b>Cut single-use plastic</b>Reusable bottles and bags shrink the debris stream before it ever nears a waterway.</div>
+          </div>
+        </div>
+        <div class="callout">
+          <h5>Water quality indicators, in plain words</h5>
+          <div class="indicatorgrid">
+            <div class="indicatoritem"><b>pH</b><span>How acidic or alkaline the water is — too far either way stresses aquatic life.</span></div>
+            <div class="indicatoritem"><b>Turbidity</b><span>How cloudy or dirty the water looks because of suspended particles.</span></div>
+            <div class="indicatoritem"><b>Dissolved Oxygen (DO)</b><span>How much oxygen is actually available for fish and other life to breathe.</span></div>
+            <div class="indicatoritem"><b>BOD</b><span>How much oxygen bacteria are using up to break down waste in the water — higher means more pollution.</span></div>
+            <div class="indicatoritem"><b>COD</b><span>A broader measure of how much "stuff" in the water could be chemically broken down.</span></div>
+            <div class="indicatoritem"><b>TDS</b><span>The total amount of dissolved salts and minerals floating in the water.</span></div>
+            <div class="indicatoritem"><b>Temperature</b><span>Warmer water holds less oxygen and can stress fish and plants.</span></div>
+            <div class="indicatoritem"><b>Conductivity</b><span>How easily electricity passes through the water — a rough proxy for dissolved salts.</span></div>
+            <div class="indicatoritem"><b>Microbial contamination</b><span>The presence of bacteria or pathogens that can make people sick.</span></div>
+            <div class="indicatoritem"><b>Heavy metals</b><span>Contaminants like lead or mercury that build up in the body over time.</span></div>
+          </div>
+        </div>
+        <div class="callout">
+          <h5>💧 Is this water safe?</h5>
+          <p style="color:rgba(241,240,230,.75); font-size:14px;">Clear water isn't the same as safe water — a lot of contamination is invisible to the eye. The only real way to know is proper testing, not appearance. If you're unsure, treat it before drinking rather than assuming it's fine.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOUND PANEL -->
+    <div class="tabpanel" id="panel-sound">
+      <div class="deepgrid">
+        <div class="deepintro reveal">
+          <h3>Sound Pollution</h3>
+          <p>The World Health Organization treats sustained sound above 65 decibels as noise pollution, calls it harmful past 75 dB, and painful past 120 dB — and new 2026 research has linked long-term traffic noise exposure to elevated Parkinson's risk, on top of the already well-documented links to heart disease, sleep disruption, and childhood learning deficits.</p>
+          <p>It isn't only a human problem: ship engines, sonar, and offshore drilling have made much of the ocean far louder than it evolved to be, disrupting how whales and dolphins echolocate to feed, navigate, and find each other.</p>
+          <div class="readouts">
+            <div class="readout"><b>65 dB</b><span>WHO pollution threshold</span></div>
+            <div class="readout"><b>30 dB</b><span>max for restful sleep</span></div>
+          </div>
+          <p class="source">Sources: Iberdrola noise-pollution desk · Britannica, noise pollution (2026 update) · UC Davis Environmental Health Sciences Center</p>
+        </div>
+        <div class="colcols">
+          <div class="deepcol">
+            <h4>Where it comes from</h4>
+            <div class="deepitem"><b>Traffic & horns</b>Road traffic is the single largest contributor to urban noise — a car horn alone reads near 90 dB.</div>
+            <div class="deepitem"><b>Construction</b>Heavy machinery run at odd hours pushes chronic exposure onto whoever lives nearby, whether they consent or not.</div>
+            <div class="deepitem"><b>Loudspeakers & events</b>Festival and announcement speakers routinely exceed residential decibel limits for hours at a stretch.</div>
+            <div class="deepitem"><b>Firecrackers</b>Fireworks produce sudden spikes well past the pain threshold, harmful to ears, pets, and wildlife alike.</div>
+          </div>
+          <div class="deepcol prevent">
+            <h4>How it's brought down</h4>
+            <div class="deepitem"><b>Zoned quiet hours</b>Regulation like India's Noise Pollution Rules sets decibel ceilings by zone and time of day.</div>
+            <div class="deepitem"><b>Acoustic design</b>Noise barriers, mufflers, and building insulation cut exposure without needing anyone to change behaviour.</div>
+            <div class="deepitem"><b>Lower-noise choices</b>Electric tools, maintained exhausts, and headphones over speakers all shave real decibels off daily life.</div>
+            <div class="deepitem"><b>Just less noise</b>Shorter horn use, later-morning construction starts, and volume caps at events add up faster than people expect.</div>
+          </div>
+        </div>
+        <div class="callout">
+          <h5>What everyday sounds actually measure</h5>
+          <div class="soundbars">
+            <div class="soundbar-row"><span class="slabel">Whisper</span><div class="soundbar-track"><div class="soundbar-fill" style="width:15%; background:var(--aqi-good);"></div></div><span class="sval">~30 dB</span></div>
+            <div class="soundbar-row"><span class="slabel">Normal conversation</span><div class="soundbar-track"><div class="soundbar-fill" style="width:38%; background:var(--aqi-good);"></div></div><span class="sval">~60 dB</span></div>
+            <div class="soundbar-row"><span class="slabel">Busy traffic</span><div class="soundbar-track"><div class="soundbar-fill" style="width:58%; background:var(--aqi-moderate);"></div></div><span class="sval">70–85 dB</span></div>
+            <div class="soundbar-row"><span class="slabel">Loud traffic / honking</span><div class="soundbar-track"><div class="soundbar-fill" style="width:74%; background:var(--aqi-unhealthy);"></div></div><span class="sval">85+ dB</span></div>
+            <div class="soundbar-row"><span class="slabel">Concert / loud speakers</span><div class="soundbar-track"><div class="soundbar-fill" style="width:95%; background:var(--aqi-severe);"></div></div><span class="sval">110+ dB</span></div>
+          </div>
+          <p style="color:rgba(241,240,230,.6); font-size:12.5px; margin-top:12px;">The louder the sound and the longer you're exposed to it, the greater the risk to hearing and overall health.</p>
+        </div>
+        <div class="callout">
+          <h5>Where loud sound should stay out</h5>
+          <div class="zonepills">
+            <span class="zonepill">🏥 Hospitals</span>
+            <span class="zonepill">🏫 Schools & colleges</span>
+            <span class="zonepill">🏘️ Residential areas</span>
+            <span class="zonepill">📚 Libraries</span>
+            <span class="zonepill">⚖️ Courts</span>
+            <span class="zonepill">🦉 Wildlife-sensitive zones</span>
+          </div>
+          <p style="color:rgba(241,240,230,.55); font-size:12px; margin-top:12px; font-family:var(--mono);">Exact decibel limits vary by country and locality — check your local noise-pollution rules for the legal numbers that apply where you live.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= SEARCH TOOL ============================= -->
+<!-- ============================= HEALTH ============================= -->
+<section id="health">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">❤️ Pollution &amp; your health</p>
+      <h2>What this actually does to a person.</h2>
+      <p>Not a medical textbook — just the plain version of why this matters day to day.</p>
+    </div>
+    <div class="healthgrid">
+      <div class="healthcard air reveal">
+        <span class="htag">Air</span>
+        <ul>
+          <li>🫁 <span>Makes breathing harder and strains the lungs, especially with long exposure</span></li>
+          <li>❤️ <span>Adds stress to the heart and blood circulation over time</span></li>
+          <li>👁️ <span>Irritates the eyes and throat on high-pollution days</span></li>
+        </ul>
+      </div>
+      <div class="healthcard water reveal">
+        <span class="htag">Water</span>
+        <ul>
+          <li>💧 <span>Contaminated water is one of the fastest ways to upset the stomach and gut</span></li>
+          <li>🦠 <span>Carries bacteria and other microorganisms that can make people seriously ill</span></li>
+          <li>☣️ <span>Long-term exposure to certain chemicals in water builds up quietly, over years</span></li>
+        </ul>
+      </div>
+      <div class="healthcard sound reveal">
+        <span class="htag">Sound</span>
+        <ul>
+          <li>👂 <span>Prolonged loud noise can damage hearing — sometimes permanently</span></li>
+          <li>😴 <span>Disrupts sleep, which knocks on to almost everything else</span></li>
+          <li>🧠 <span>Raises stress and makes it harder to concentrate</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="disclaimer reveal" style="max-width:640px; margin-top:26px;">
+      <span>ⓘ</span><span>This information is for general awareness and isn't a substitute for medical advice.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= HOTSPOT MAP ============================= -->
+<section style="background:var(--paper-dim); border-top:1px solid var(--line); border-bottom:1px solid var(--line);" id="hotspots">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">📍 Pollution hotspots</p>
+      <h2>A closer look inside <span id="hotspotCityName">Nashik</span>.</h2>
+      <p>An illustrative zone map — not real geographic coordinates — showing how pollution can vary block to block within the same city. Search a different area above and this updates.</p>
+    </div>
+    <div class="mapwrap reveal">
+      <div class="maplegend">
+        <span><i style="background:var(--aqi-good);"></i>Low</span>
+        <span><i style="background:var(--aqi-moderate);"></i>Moderate</span>
+        <span><i style="background:var(--aqi-unhealthy);"></i>High</span>
+        <span><i style="background:var(--aqi-severe);"></i>Critical</span>
+      </div>
+      <div class="zonefield" id="zoneField"></div>
+      <div class="zonepanel" id="zonePanel"></div>
+    </div>
+  </div>
+</section>
+
+<section class="search-section" id="search">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Search the field index</p>
+      <h2>Type something you did today.</h2>
+      <p>Burned some trash? Left the tap running? Honked through a red light? Search it — the index will tell you which front it hits, why, and the fix. Log it and it counts toward your score below.</p>
+    </div>
+
+    <div class="searchbox reveal">
+      <input type="text" id="searchInput" placeholder="Try “burning plastic”, “car horn”, “cooking oil down the sink”…" autocomplete="off">
+      <button id="searchBtn">Search</button>
+    </div>
+    <div id="suggestions"></div>
+    <div class="chips reveal" id="chipRow"></div>
+
+    <div id="resultArea"></div>
+  </div>
+</section>
+
+<!-- ============================= INDIA MAP — PICK AN AREA ============================= -->
+<section style="background:var(--paper-dim); border-top:1px solid var(--line); border-bottom:1px solid var(--line);" id="mappicker">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">📍 Pinpoint it on the map</p>
+      <h2>Tap a city on the map of India to report there.</h2>
+      <p>This is Google's own map of India, embedded directly — with pins for the areas already in our index. Tap one to pull up its reading and jump straight to the report form with the location filled in.</p>
+    </div>
+    <div class="indiamap-frame reveal">
+      <iframe src="https://www.google.com/maps?ll=22.6,80.5&z=5&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Google Map of India"></iframe>
+      <div class="indiamap-overlay" id="mapPinLayer"></div>
+      <div class="map-legend">
+        <span class="lg"><i style="background:var(--aqi-good);"></i>Good</span>
+        <span class="lg"><i style="background:var(--aqi-moderate);"></i>Moderate</span>
+        <span class="lg"><i style="background:var(--aqi-unhealthy);"></i>Poor</span>
+        <span class="lg"><i style="background:var(--aqi-severe);"></i>Very poor / severe</span>
+      </div>
+    </div>
+    <p class="map-note reveal">Pins are placed at approximate positions over the embedded map for this prototype, not exact GPS coordinates — a live version would use the Google Maps JavaScript API with a key to place them precisely and let you drop a pin anywhere.</p>
+    <div class="map-selected reveal" id="mapSelected">
+      <div>
+        <div class="msname" id="mapSelName">—</div>
+        <div class="msmeta" id="mapSelMeta">—</div>
+      </div>
+      <a href="#report" class="btn" id="mapSelReportBtn">Report this area ↓</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= REPORT POLLUTION ============================= -->
+<section id="report">
+  <div class="wrap">
+    <div class="section-head-row reveal">
+      <div class="section-head" style="margin-bottom:0;">
+        <p class="eyebrow">📢 See pollution? Report it.</p>
+        <h2>Flag it here — for the record.</h2>
+        <p>This is a prototype reporting flow (no backend behind it yet), but it's built the way a real one would work: report, verify, review.</p>
+      </div>
+      <div>
+        <button class="dotsbtn" id="reportsToggle" aria-label="View submitted reports" title="View submitted reports">⋯<span class="dotscount" id="reportsCount">0</span></button>
+        <div class="dotslabel">Reports</div>
+      </div>
+    </div>
+    <div class="reportspanel" id="reportsPanel">
+      <div class="reportspanel-inner">
+        <div class="reportsfeed-head"><span>Community reports</span><span id="reportsFeedCount">0 logged</span></div>
+        <div id="reportsList"></div>
+      </div>
+    </div>
+    <form class="formcard reveal" id="reportForm" style="margin-top:30px;">
+      <div class="formrow">
+        <div class="field">
+          <label>Type of issue</label>
+          <select id="reportType" required>
+            <option value="">Choose one…</option>
+            <option>Air pollution</option>
+            <option>Water pollution</option>
+            <option>Sound pollution</option>
+            <option>Garbage dumping</option>
+            <option>Industrial pollution</option>
+            <option>Vehicle smoke</option>
+            <option>Excessive honking</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input type="text" id="reportLocation" placeholder="e.g. MG Road, Nashik" required>
+        </div>
+      </div>
+      <div class="formrow">
+        <div class="field">
+          <label>Date &amp; time</label>
+          <input type="datetime-local" id="reportDatetime">
+        </div>
+        <div class="field">
+          <label>Photo (optional)</label>
+          <input type="file" id="reportPhoto" accept="image/*" style="display:none;">
+          <label for="reportPhoto" class="filebtn" id="reportFileLabel">📷 Tap to attach a photo</label>
+        </div>
+      </div>
+      <div class="field full" style="margin-bottom:20px;">
+        <label>What's happening</label>
+        <textarea id="reportDesc" placeholder="Describe what you're seeing — the more specific, the more useful." required></textarea>
+      </div>
+      <button type="submit" class="submitbtn">Submit report</button>
+      <div class="formresult" id="reportResult"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============================= TRAFFIC & VEHICLE ============================= -->
+<section style="background:var(--paper-dim); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">🚗 Traffic &amp; vehicle pollution</p>
+      <h2>Small driving habits matter more than they seem.</h2>
+      <p>A lot of urban air and noise pollution comes down to ordinary driving choices, multiplied across a whole city.</p>
+    </div>
+    <div class="colcols reveal" style="margin-bottom:44px;">
+      <div class="deepcol" style="--tw:1;">
+        <h4 style="color:var(--ink-soft);">What adds up</h4>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink);"><b>Idling</b>Sitting with the engine on burns fuel for zero distance travelled.</div>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink);"><b>Poor maintenance</b>An unserviced engine burns fuel less completely, raising emissions.</div>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink);"><b>Excess honking</b>Every unnecessary horn blast adds directly to street-level noise.</div>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink);"><b>Aggressive driving</b>Hard acceleration and braking burns noticeably more fuel than a steady pace.</div>
+      </div>
+      <div class="deepcol prevent">
+        <h4 style="color:var(--ink-soft);">What helps</h4>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink); border-left:3px solid var(--aqi-good);"><b>Public transport</b>Fewer cars per person on the road means less emissions per trip.</div>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink); border-left:3px solid var(--aqi-good);"><b>Regular servicing</b>A well-tuned engine is a cleaner, quieter one.</div>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink); border-left:3px solid var(--aqi-good);"><b>Patience over the horn</b>It's a safety tool, not an impatience outlet.</div>
+        <div class="deepitem" style="background:var(--paper); border:1px solid var(--line); color:var(--ink); border-left:3px solid var(--aqi-good);"><b>Smooth driving</b>Gentler acceleration saves fuel and cuts emissions.</div>
+      </div>
+    </div>
+
+    <div class="section-head reveal" style="margin-bottom:28px;">
+      <p class="eyebrow">🚦 Traffic violation reporting</p>
+      <h3 style="font-family:var(--display); font-size:24px;">Seen a pollution-related violation?</h3>
+    </div>
+    <form class="formcard reveal" id="trafficForm">
+      <div class="formrow">
+        <div class="field">
+          <label>Violation type</label>
+          <select id="trafficType" required>
+            <option value="">Choose one…</option>
+            <option>Red-light violation</option>
+            <option>Excessive honking</option>
+            <option>Visible vehicle smoke</option>
+            <option>Other pollution-related violation</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Location</label>
+          <input type="text" id="trafficLocation" placeholder="Where did you see it?" required>
+        </div>
+      </div>
+      <div class="field full" style="margin-bottom:20px;">
+        <label>Details</label>
+        <textarea id="trafficDesc" placeholder="Vehicle description, time, anything relevant."></textarea>
+      </div>
+      <button type="submit" class="submitbtn">Submit report</button>
+      <div class="formresult" id="trafficResult"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============================= SHARE YOUR IDEA ============================= -->
+<section id="idea">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">💡 Have an idea to reduce pollution?</p>
+      <h2>You know your area better than anyone.</h2>
+      <p>Share a simple idea that could make it cleaner, quieter, or healthier — big or small.</p>
+    </div>
+    <form class="formcard reveal" id="ideaForm">
+      <div class="formrow">
+        <div class="field">
+          <label>Your name (optional)</label>
+          <input type="text" id="ideaName" placeholder="Anonymous is fine too">
+        </div>
+        <div class="field">
+          <label>Pollution type</label>
+          <select id="ideaType" required>
+            <option value="">Choose one…</option>
+            <option>Air</option>
+            <option>Water</option>
+            <option>Sound</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="formrow">
+        <div class="field full">
+          <label>Your idea</label>
+          <textarea id="ideaText" placeholder="What would actually help, in your area?" required></textarea>
+        </div>
+      </div>
+      <div class="formrow" style="grid-template-columns:1fr;">
+        <div class="field">
+          <label>Area / city</label>
+          <input type="text" id="ideaArea" placeholder="Where is this idea for?">
+        </div>
+      </div>
+      <button type="submit" class="submitbtn">Submit idea · +20 pts</button>
+      <div class="formresult" id="ideaResult"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============================= DASHBOARD ============================= -->
+<section class="dash" id="dashboard">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">🏆 Pollution fighter points</p>
+      <h2>Come back tomorrow — the index remembers.</h2>
+      <p>Points and streaks are saved to this browser, so logging a couple of real actions each day compounds. That's the whole mechanic: small, repeated, tracked.</p>
+    </div>
+
+    <div class="pointsources reveal">
+      <div class="psource"><span>💡 Submit a useful idea</span><b>+20</b></div>
+      <div class="psource"><span>📢 Report a genuine issue</span><b>+30</b></div>
+      <div class="psource"><span>🌱 Log a clean-up action</span><b>+50</b></div>
+      <div class="psource"><span>♻️ Share a verified tip</span><b>+10</b></div>
+    </div>
+
+    <div class="dashgrid" style="margin-top:36px;">
+      <div class="scorepanel reveal">
+        <div class="toprow">
+          <div>
+            <p class="eyebrow" style="margin-bottom:6px;">Total score</p>
+            <div class="bignum" id="dashPts">0<span>pts</span></div>
+          </div>
+          <div class="tier" id="tierBadge">🌱 Beginner</div>
+        </div>
+        <div class="progwrap">
+          <div class="progbar"><div class="progfill" id="progFill"></div></div>
+          <div class="progtext"><span id="progNow">0 pts</span><span id="progNext">Next level at 100</span></div>
+        </div>
+        <div class="streaks">
+          <div class="streak-box"><b id="streakNum">0</b><span>day streak</span></div>
+          <div class="streak-box"><b id="loggedCount">0</b><span>unique actions logged</span></div>
+          <div class="streak-box"><b id="typeLead">—</b><span>most-fixed front</span></div>
+        </div>
+        <ul class="log-list" id="logList">
+          <li style="color:var(--ink-soft); border-bottom:none;">Nothing logged yet — search above and hit "Log this fix."</li>
+        </ul>
+      </div>
+
+      <div class="badgeboard reveal">
+        <div class="badge" data-tier="0"><div class="bicon" style="background:var(--aqi-good);">🌱</div><div class="btext"><b>Beginner</b><span>Just getting started</span></div></div>
+        <div class="badge" data-tier="100"><div class="bicon" style="background:var(--aqi-moderate);">🌿</div><div class="btext"><b>Eco Helper</b><span>Reach 100 points</span></div></div>
+        <div class="badge" data-tier="250"><div class="bicon" style="background:var(--aqi-unhealthy);">🌳</div><div class="btext"><b>Green Guardian</b><span>Reach 250 points</span></div></div>
+        <div class="badge" data-tier="450"><div class="bicon" style="background:var(--aqi-severe);">🏆</div><div class="btext"><b>Pollution Fighter</b><span>Reach 450 points</span></div></div>
+      </div>
+    </div>
+
+    <div class="leaderboard reveal" style="margin-top:24px;">
+      <h4>Local leaderboard</h4>
+      <p class="lbnote">Sample participants for now — this browser's score is slotted in live. A shared leaderboard across everyone needs a backend to go with it.</p>
+      <div id="lbList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= CLOSING: TIPS + WHAT CAN WE DO ============================= -->
+<section class="closing" id="closing">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">🌱 What can we do?</p>
+      <h2 style="color:var(--paper);">One-minute green tips.</h2>
+    </div>
+    <div class="tips-ticker reveal" id="tipsTicker">
+      <div class="tip-slide active"><p>🌱 Skip the vehicle for short trips when you can.</p></div>
+    </div>
+    <div class="tipdots" id="tipDots"></div>
+    <div class="closing-cta">
+      <p>First understand the pollution around you. Then figure out what you can actually do about it — that's really the whole idea behind this project.</p>
+      <a href="#areasearch" class="btn ghost" style="border-color:var(--paper); color:var(--paper);">Check your area again ↑</a>
+    </div>
+  </div>
+</section>
+
+<section class="team">
+  <div class="wrap">
+    <div class="team-head reveal">
+      <p class="eyebrow">Field team</p>
+      <h2>The people who logged the first readings.</h2>
+      <p>SIGNAL began as a Continuous Evaluation Project on air, water &amp; sound pollution awareness, built out into this field index by the same team.</p>
+    </div>
+
+    <div class="roster reveal">
+      <div class="roster-card">
+        <div class="initial">DS</div>
+        <div class="signame">Dnyaneshwari Sutar</div>
+      </div>
+      <div class="roster-card">
+        <div class="initial">MT</div>
+        <div class="signame">Mayur Thoke</div>
+      </div>
+      <div class="roster-card">
+        <div class="initial">SW</div>
+        <div class="signame">Sushant Wagh</div>
+      </div>
+      <div class="roster-card">
+        <div class="initial">PW</div>
+        <div class="signame">Prem Wayal</div>
+      </div>
+    </div>
+
+    <div class="guidance reveal">
+      <div>
+        <p class="gwho">Under the guidance of</p>
+        <p class="gname">Prof. N. S. Mahale</p>
+      </div>
+      <div class="gorg">
+        Department of Artificial Intelligence and Data Science<br>
+        Late G. N. Sapkal College of Engineering, Nashik
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footgrid">
+      <div>
+        <h4>SIGNAL</h4>
+        <p>A small field-index for the pollution hiding in ordinary routines — built to make air, water, and sound pollution searchable instead of abstract.</p>
+      </div>
+      <div>
+        <h4>Sources referenced</h4>
+        <ul>
+          <li>WHO · Coltura 2026 guide</li>
+          <li>Clean Air Fund, 2026 roundup</li>
+          <li>Microbenotes · Britannica</li>
+          <li>Iberdrola sustainability desk</li>
+          <li>UC Davis Env. Health Sciences</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="#areasearch">Check your area</a></li>
+          <li><a href="#deepdive">Air / Water / Sound</a></li>
+          <li><a href="#report">Report pollution</a></li>
+          <li><a href="#idea">Share an idea</a></li>
+          <li><a href="#dashboard">Your score</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footbottom">
+      <span>© 2026 SIGNAL FIELD INDEX</span>
+      <span>All area/city readings are demo data for this prototype — not a live feed.</span>
+    </div>
+  </div>
+</footer>
+
+<div id="toast"><span class="tdot"></span><span id="toastText">Logged</span></div>
+
+<script src="script.js"></script>
+</body>
+</html>
